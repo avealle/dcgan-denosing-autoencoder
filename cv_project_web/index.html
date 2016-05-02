@@ -229,7 +229,17 @@ $(function(){
             that is often present when using denoising autoencoders.  We trained an additional model to test whether pooling was effectively preventing blur.  The results above clearly show that removing pooling does in fact bring back a blurred look to the problem area.  However,
             the areas of the image that were not masked in the input image seem to be mostly clear of artifacts.  This is in direct contrast from when pooling is used; images often have artifacts on areas outside of the original image mask.
           </p>
+    <h2>Future works</h2>
+    <ul>
+      <li>Currently we are working on filling the missing patch for the input image. We want to test  whether discriminator can help with autoencoder encoding/decoding the siganals.</li>
+      <li>From the experiments, we see a dynamic mechanism is neccesary in learning for at least generator:adjust the weight learning from reconstruction mse loss and learn from the feedback in fooling discriminators. We want to explore more in this area as well.</li>
+      <li>We see generator and discriminator helps with each other’s learning. If trained properly with dynamic mechanism in adjusting the learning weights given the loss values, the training ends up getting two well functioning agent, one for generating/filling images, the other for classification task.
+          We want to test whether with fine tuning  on other datasets, each agent can transfer well for generation and classification tasks.</li>
+
+        </ul>
+
   </div>
+
 
 </body>
 

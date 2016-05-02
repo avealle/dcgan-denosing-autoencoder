@@ -3,12 +3,12 @@
 This implementation slightly adjusts the convolutional autoencoder implementation found here:  https://github.com/mikesj-public/dcgan-autoencoder
 
 The main adjustments are:
-    * Altering the net input size
-    * Adding additional convolutional layers to the front of the autoencoder
-    * Toggling Pooling before MSE
-    * Adjusting the encoding cost multiplier
-    * Adding functionality for printing the entire test set
-    * Adjusting dataprocessing.py to create a masked image dataset
+* Altering the net input size
+* Adding additional convolutional layers to the front of the autoencoder
+* Toggling Pooling before MSE
+* Adjusting the encoding cost multiplier
+* Adding functionality for printing the entire test set
+* Adjusting dataprocessing.py to create a masked image dataset
 
 The instructions for running the code are copied below from the original implementation:
 

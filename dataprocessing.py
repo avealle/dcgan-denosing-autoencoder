@@ -8,6 +8,7 @@ import pickle
 from time import time
 import sys
 import h5py
+import random
 from tqdm import tqdm
 
 
@@ -27,9 +28,14 @@ def process_image(im):
     im.thumbnail(new_size, Image.ANTIALIAS)
     target = np.array(im)[3:-3,4:-4,:]
     im = Image.fromarray(target)
-    new_size = [i/4 for i in im.size]
+    #new_size = [i/4 for i in im.size]
     im.thumbnail(new_size, Image.ANTIALIAS)
     input = np.array(im)
+    y = random.randint(0, 2 * (input.shape[0] / 3))
+    x = random.randint(0, 2 * (input.shape[1] / 3))
+    dy = random.randint(10, input.shape[0] / 3)
+    dx = random.randint(10, input.shape[1] / 3)
+    input[y:y + dy, x:x + dx] = np.array([255, 255, 255])
     return input, target
 
 
@@ -41,7 +47,7 @@ def proc_loc(loc):
     except KeyboardInterrupt:
         raise
     except:
-        return None 
+        return None
 
 
 try:
@@ -51,14 +57,14 @@ except:
 
 
 try:
-    dset_t = hf.create_dataset("target", (1,160,128,3), 
-                               maxshape= (1e6,160,128,3), chunks = (1,160,128,3), compression = "gzip") 
+    dset_t = hf.create_dataset("target", (1,160,128,3),
+                               maxshape= (1e6,160,128,3), chunks = (1,160,128,3), compression = "gzip")
 except:
     dset_t = hf['target']
 
 try:
-    dset_i = hf.create_dataset("input", (1, 40, 32, 3), 
-                               maxshape= (1e6, 40, 32, 3), chunks = (1, 40, 32, 3), compression = "gzip")
+    dset_i = hf.create_dataset("input", (1,160,128,3),
+                               maxshape= (1e6,160,128,3), chunks = (1,160,128,3), compression = "gzip")
 except:
     dset_i = hf['input']
 
@@ -88,12 +94,12 @@ for i in tqdm(range(num_iter)):
     X_in = np.array(X_in)
     X_ta = np.array(X_ta)
 
-    dset_i.resize((insert_point + len(X_in),40, 32, 3))
+    dset_i.resize((insert_point + len(X_in),160,128,3))
     dset_t.resize((insert_point + len(X_in),160,128,3))
 
     dset_i[insert_point:insert_point + len(X_in)] = X_in
     dset_t[insert_point:insert_point + len(X_in)] = X_ta
 
     insert_point += len(X_in)
-    
+
 hf.close()

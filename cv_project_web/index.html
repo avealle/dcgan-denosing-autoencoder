@@ -47,7 +47,9 @@ $(function(){
 <body>
   <div id="primarycontent">
     <center><h1>Generative Adversarial Denoising Autoencoder for Face Completion</h1></center>
-    <center><img src="images/deepsegments_cropped_notitle.png"></center>
+      <center><ul id="people">
+      <li><a href="">Avery Allen, </a><a href="http://wenchenli.github.io/about/">Wenchen Li </a></li>
+    </ul></center>
     <h2>Project Overview</h2>
     <p>
         Our original project focus was creating a pipeline for photo restoration of portrait images.  Many damaged photos are available online, and current photo restoration solutions either provide unsatisfactory results, or
@@ -71,11 +73,7 @@ $(function(){
         a collection of convolution and deconvolution layers, to reconstruct the original unmasked image.  A discriminator is also trained using the output of the generator.  The discriminator's output is used together with a reconstruction cost to update the weights of the generator.
 
     </p>
-    <h2>Contributors</h2>
-    <ul id="people">
-    <li><a href="">Avery Allen </a></li>
-    <li><a href="http://wenchenli.github.io/about/">Wenchen Li </a></li>
-    </ul>
+
     <h2>Dataset</h2>
     <p>
         We use the <a href= "http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html"> CelebA Dataset </a> to train our model.  The dataset consists of around 200,000 images including over 10,000 unique identites.
@@ -101,20 +99,31 @@ $(function(){
       <center><img src="images/architecture_autoencoder.png" alt="Autoencoder Architecture" width="800"></center>
     </figure>
     <h3>Discriminator</h3>
-    The discriminator consists of 4 convolutional layers.  It accepts a 128x160 RGB image as input.  The discriminator is trained to determine whether the input image is a face.  A sigmoid function is used on the final layer to yield a probability between 0 and 1.  The probability represents
-    the discriminator's belief that the input image is a face.  During training, the discriminator is updated using real images from the training set, and images generated from the autoencoder.  The discriminator is rewarded for assigning a low probability to generated faces, and a high probability
+    The discriminator consists of 4 convolutional layers.  It accepts a 128x160 RGB image as input.  The discriminator is trained to determine whether the input image is a real face.  A sigmoid function is used on the final layer to yield a probability between 0 and 1.  The probability represents
+    the discriminator's belief that the input image is a real face.  During training, the discriminator is updated using real images from the training set, and images generated from the autoencoder.  The discriminator is rewarded for assigning a low probability to generated faces, and a high probability
     to real faces.  The cost functions are described in the next section.  A diagram of the discriminator is shown below.
     <figure>
       <center><img src="images/architecture_discriminator.png" alt="Discriminator Architecture" width="800"></center>
     </figure>
+
+
     <p>
 
     <h3>DCGAN Guidelines</h3>
     The architecture adheres to the following guidelines suggested in <a href = "http://arxiv.org/pdf/1511.06434v2.pdf"> Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks</a> which seemed to help make training stable:
-    <figure>
+    <!-- <figure>
       <center><img src="images/dcgan_guidelines.png" alt="DCGAN Guidelines"></center>
-    </figure>
-
+    </figure> -->
+    <p>
+      <ul>
+        <li>Replace any pooling layers with strided convolutions (discriminator) and fractional-strided
+        convolutions (generator).</li>
+        <li>Use batchnorm in both the generator and the discriminator.</li>
+        <li>Remove fully connected hidden layers for deeper architectures.</li>
+        <li>Use ReLU activation in generator for all layers except for the output, which uses Tanh.</li>
+        <li>Use LeakyReLU activation in the discriminator for all layers.</li>
+      </ul>
+    </p>
 
     </p>
 

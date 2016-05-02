@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Generative Adversarial Denoising Autoencoder for Face Completion</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+
+<script>
+$(function(){
+  $("#denoising_one_encoding_mse_test_vs_train").load("plots/denoising_one_encoding_mse_test_vs_train.html");
+});
+</script>
+
+<script>
+$(function(){
+  $("#denoising_one_encoding_discrim_testing").load("plots/denoising_one_encoding_discrim_testing.html");
+  });
+</script>
+
+<script>
+$(function(){
+  $("#autoencoder_mse_test_vs_train").load("plots/autoencoder_mse_test_vs_train.html");
+});
+</script>
+
+<script>
+$(function(){
+  $("#denoising_one_hundreth_encoding_mse_test_vs_train").load("plots/denoising_one_hundreth_encoding_mse_test_vs_train.html");
+});
+</script>
+
+<script>
+$(function(){
+  $("#denoising_one_hundreth_encoding_discrim_testing").load("plots/denoising_one_hundreth_encoding_discrim_testing.html");
+});
+</script>
+
+<script>
+$(function(){
+  $("#denoising_one_encoding_nopooling_discrim_testing").load("plots/denoising_one_encoding_mse_test_vs_train.html");
+});
+</script>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+  <div id="primarycontent">
+    <center><h1>Generative Adversarial Denoising Autoencoder for Face Completion</h1></center>
+    <center><img src="images/deepsegments_cropped_notitle.png"></center>
+    <h2>Project Overview</h2>
+    <p>
+        Our original project focus was creating a pipeline for photo restoration of portrait images.  Many damaged photos are available online, and current photo restoration solutions either provide unsatisfactory results, or
+        require an advanced understanding of image editing software.  Shortly after begining the project, we narrowed our scope to what we consider the most interesting subproblem of photo resotration: facial image completion.
+        The image completion problem we attempted to solve was as follows, given an image of a face with a square section of the image set to be white, fill in the missing pixels.
+    </p>
+        <figure>
+          <center><img src="images/training_imgs.jpg" alt="Training Images"></center>
+          <center><figcaption>Original image and masked image.</figcaption></center>
+        </figure>
+    <p>
+        There are previous works that attempt to solve similar problems.  <a href = "http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=5705573&url=http%3A%2F%2Fieeexplore.ieee.org%2Fxpls%2Fabs_all.jsp%3Farnumber%3D5705573">
+        Graph Laplace for Occluded Face Completion and Recognition</a> and <a href = "http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=5413474&url=http%3A%2F%2Fieeexplore.ieee.org%2Fxpls%2Fabs_all.jsp%3Farnumber%3D5413474">
+        Partially occluded face completion and recognition</a> both leverage a large image database to find similar faces to use to complete the missing patch, but results are only shown for low resolution grey scale images.
+        <a href = "https://papers.nips.cc/paper/4686-image-denoising-and-inpainting-with-deep-neural-networks.pdf"> Image Denoising and Inpainting with Deep Neural Networks</a> uses deep networks pre-trained with denoising autoencoders for image inpainting,
+        but do no show completion of large missing image patches.
+    </p>
+    <p>
+        Our approach builds upon the work presented in <a href = "http://arxiv.org/pdf/1511.06434v2.pdf"> Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks</a> and
+        <a href = "https://swarbrickjones.wordpress.com/2016/01/13/enhancing-images-using-deep-convolutional-generative-adversarial-networks-dcgans/">Enhancing images using Deep Convolutional Generative Adversarial Networks (DCGANs)</a>.  In our approach we use a generator,
+        a collection of convolution and deconvolution layers, to reconstruct the original unmasked image.  A discriminator is also trained using the output of the generator.  The discriminator's output is used together with a reconstruction cost to update the weights of the generator.
+
+    </p>
+    <h2>Contributors</h2>
+    <ul id="people">
+    <li><a href="">Avery Allen </a></li>
+    <li><a href="http://wenchenli.github.io/about/">Wenchen Li </a></li>
+    </ul>
+    <h2>Dataset</h2>
+    <p>
+        We use the <a href= "http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html"> CelebA Dataset </a> to train our model.  The dataset consists of around 200,000 images including over 10,000 unique identites.
+        We reserve 1000 images as a test set, and 1000 images as a validation set.  For each image, we set a randomly sized patch to be white.  Each generated patch is at least 10 pixels in width/height and
+        takes up a maximum of 1/3 of the image.  The patch's X,Y coordinates are selected randomly.
+    </p>
+
+    <h2>Architecture</h2>
+    <h3>Overview</h3>
+    The architecture has two major components: the autoencoder, and the discriminator.  A diagram of the architecture is shown below.  The autoencoder (left side of diagram) accepts a masked image as an input, and
+    attempts to reconstruct the original unmasked image.  The discriminator (right side) is trained to determine whether a given image is a face.  The discriminator is run using the output of the autoencoder.  The result is used to
+    influence the cost function used to update the autoencoder's weights.  We built upon <a href = "https://swarbrickjones.wordpress.com/2016/01/13/enhancing-images-using-deep-convolutional-generative-adversarial-networks-dcgans/">Enhancing images using Deep Convolutional
+        Generative Adversarial Networks (DCGANs)</a>'s codebase.  The project code can be found in this <a href = "https://github.com/averyallen71/dcgan-denosing-autoencoder">repository</a>.
+    <figure>
+      <center><img src="images/architecture_overview.png" alt="Architecture Overview" width="800"></center>
+    </figure>
+    <h3>Autoencoder</h3>
+    Traditionally, autoencoders have been used to learn a feature representation for some data set.  Denoising autoencoders artificially corrupt input data in order to force a more robust representation to be learned.
+    In our case, the image mask is the data corruption.  Our autoencoder first transforms the input data through a series of 4 convolution layers.  At the center layer of the autoencoder, the image is represented by 1024 8 x 10
+    feature maps.  The input image is then reconstructed by 4 fractionally strided convolution layers (sometimes called deconvolution layers).  The output layer uses a tanh activation function.  The autoencoder's weights are updated by a combination of two cost: the mean squared error
+    between the original unmasked image and the reconsted image, and binary cross entropy using the output of the discriminator (desribed in the next section).  A diagram of the autoencoder is shown below.
+    <figure>
+      <center><img src="images/architecture_autoencoder.png" alt="Autoencoder Architecture" width="800"></center>
+    </figure>
+    <h3>Discriminator</h3>
+    The discriminator consists of 4 convolutional layers.  It accepts a 128x160 RGB image as input.  The discriminator is trained to determine whether the input image is a face.  A sigmoid function is used on the final layer to yield a probability between 0 and 1.  The probability represents
+    the discriminator's belief that the input image is a face.  During training, the discriminator is updated using real images from the training set, and images generated from the autoencoder.  The discriminator is rewarded for assigning a low probability to generated faces, and a high probability
+    to real faces.  The cost functions are described in the next section.  A diagram of the discriminator is shown below.
+    <figure>
+      <center><img src="images/architecture_discriminator.png" alt="Discriminator Architecture" width="800"></center>
+    </figure>
+    <p>
+
+    <h3>DCGAN Guidelines</h3>
+    The architecture adheres to the following guidelines suggested in <a href = "http://arxiv.org/pdf/1511.06434v2.pdf"> Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks</a> which seemed to help make training stable:
+    <figure>
+      <center><img src="images/dcgan_guidelines.png" alt="DCGAN Guidelines"></center>
+    </figure>
+
+
+    </p>
+
+
+    <h2>Loss functions</h2>
+    There are four loss values we define in our model:
+    <xmp>
+      d_cost_real = binary_cross_entropy(p_real, T.ones(p_real.shape)).mean()
+      d_cost_gen = binary_cross_entropy(p_gen, T.zeros(p_gen.shape)).mean()
+
+      g_cost_d = binary_cross_entropy(p_gen, T.ones(p_gen.shape)).mean()
+      enc_cost = mse(source_flat, target_flat).mean()
+    </xmp>
+      <p>For generator, we measure it's performence to fool the discriminator as how well the generated faces will be accepted by discriminator (how well
+        p_gen approximates p_real, g_cost_d). Also we force generator to learn the pixelwise representation of the faces by learning from the mean square errors from
+        the groundtruth images(enc_cost).</p>
+      <p>For discriminator, we measure it's performence on how well it can identify faces from groundtruth images(d_cost_real) as well as how well it can
+        recognize generated faces from generator(d_cost_gen).</p>
+      <p>where p_* is the probability distribution by sigmoid function (softmax for multiple labels) at the last layer of discriminator.</p>
+
+    During training and testing, we mainly track three of them: g_cost_d, enc_cost and d_cost_real.
+    <h2>Results</h2>
+    <center><img src="images/one.png"></center>
+
+    The base setup is denoising autoencoder with discriminator.
+    (Base model Setup description goes here.)
+
+      <h3>Base Setup test results:</h3>
+      We hold out 1000 images for testing and here are the results.
+          <h4><center>Test results along training epoches</center></h4>
+            <center>
+              <iframe width="320" height="180" src="https://www.youtube.com/embed/SXWT4DDnukI" frameborder="0" allowfullscreen></iframe>
+              <iframe width="320" height="180" src="https://www.youtube.com/embed/3iqZ5s_2HoE" frameborder="0" allowfullscreen></iframe>
+            </center>
+          <h4><center>final test results</center></h4>
+            <center>
+              <iframe width="560" height="315" src="https://www.youtube.com/embed/YAv9K4U39oc" frameborder="0" allowfullscreen></iframe>
+            </center>
+          <h4><center>loss values along epoches</center></h4>
+          <div id="denoising_one_encoding_mse_test_vs_train"></div>
+          <div id="denoising_one_encoding_discrim_testing"></div>
+          <p>
+            Around 10k iter, reconstruction reach local minimum. And we see a divergence trend starting
+            at around 15k between generator's performence on fooling discriminator (g_cost_d) and discriminator's performence on
+            identifying real face data(d_cost_real).
+          </p>
+          <p>
+            An explanation we believe is: discriminator's only goal is discriminate between real
+            face data and generated data, it learns so much from generator reconstruction result as mse loss getting lower. So it
+            is gradually good at diffenciating real and generated data even if the generated faces are more convincing after a few
+            epoches. However generator still has to care on reconstruction loss the same amount compared to the starting point even
+            if it can't learn much from the reconstruction loss plus discriminator becomes better and better. Therefore these two agent end up diverging.
+          </p>
+          <p>
+            We propose there should be a dynamic learning mechanism on adjusting the weights for at least generator at this case:
+            generator should gradually learn less from the mse loss in reconstructing the faces once learning from mse loss is no longer
+            "efficient" in the sense of fooling the discriminator.
+          </p>
+
+    <h2>Experiments</h2>
+      <p>To help better understand how generator and discriminator works together, we run several control experiments based on our base setup.
+
+      <h3>Without discriminator</h3>
+
+      <center><img src="images/noDiscriminator.png"></center>
+        <h4><center>without discriminator mse loss</center></h4>
+          <div id="autoencoder_mse_test_vs_train"></div>
+          <p>
+            Discriminator does help with reconstruction even though it’s objective is to discriminate between real face data and generated face data.
+            So we hypothesize discriminator helps with encoding/decoding the signal, which leads to one of our future work.
+          </p>
+
+      <h3>Decrease generator learning weights from mse loss</h3>
+      <center><img src="images/one_hundred.png"></center>
+      <!-- <h4><center>mse loss without pooling</center></h4> -->
+        <div id="denoising_one_hundreth_encoding_mse_test_vs_train"></div>
+        <div id="denoising_one_hundreth_encoding_discrim_testing"></div>
+        <p>
+          To test what is a good weight combination for generator to learn from MSE loss and fooling discriminator loss, we set
+          <xmp>
+            generator_loss = MSE * X + g_cost_d
+          </xmp>
+          where X = .01(base model X = 1).
+          From the X = .01 experiment, we see resonctruction loss reach local minimum at loss value much higher than X = 1.
+          This leads to generator learns more from discriminator and reach an equilibrium  with discriminator but leads
+          to poor reconstruction of the original input.
+          Such result is bad because this adversarial network is two agents learning from each other, but reaching equilibrium early
+          leads to two agent ends up learning nothing from each other. Agents think they are doing a good job based on
+          their objectives, but it’s actually not.
+        </p>
+        <p>
+          So at this case, Learning a good reconstruction for generator is the top priority initially.
+          If Generator learns more from discriminator initially, it leads to reaching a non optimal equilibrium earlier
+          and earlier equilibrium leads to bad performance for both agents.
+        </p>
+
+      <h3>MSE reconstruction without pooling</h3>
+      <center><img src="images/nopoolingmse.png"></center>
+        <h4><center>mse loss without pooling</center></h4>
+          <div id="denoising_one_encoding_nopooling_discrim_testing"></div>
+          <p>
+            Since MSE for autoencoder makes the reconstructed image blur.
+            This experiment test the idea that doing max pooling then calculate
+            MSE loss helps with sharpening the patch completes the face. The reason
+            is obvious, the backpropagation from the max pooling layer makes the filling
+            patches sharper compared to calculate MSE loss without max pooling.
+          </p>
+  </div>
+
+</body>
+
+</html>

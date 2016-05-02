@@ -128,22 +128,34 @@ $(function(){
       g_cost_d = binary_cross_entropy(p_gen, T.ones(p_gen.shape)).mean()
       enc_cost = mse(source_flat, target_flat).mean()
     </xmp>
-      <p>For generator, we measure it's performence to fool the discriminator as how well the generated faces will be accepted by discriminator (how well
-        p_gen approximates p_real, g_cost_d). Also we force generator to learn the pixelwise representation of the faces by learning from the mean square errors from
-        the groundtruth images(enc_cost).</p>
-      <p>For discriminator, we measure it's performence on how well it can identify faces from groundtruth images(d_cost_real) as well as how well it can
-        recognize generated faces from generator(d_cost_gen).</p>
-      <p>where p_* is the probability distribution by sigmoid function (softmax for multiple labels) at the last layer of discriminator.</p>
+      <p>The autoencoder's ability to fool the discriminator is determined by the discriminator's response when given a generated face (how well
+        p_gen approximates p_real, g_cost_d).  P_gen and p_real are both probability distributions from the sigmoid function at the last layer of the discriminator. The autoencoder is also forced to learn the pixelwise representation of the faces by learning from the mean square errors from
+        the groundtruth images(enc_cost).
+      </p>
+      <p>The discriminator's performance is measured by how well it can identify faces from groundtruth images(d_cost_real), and also how well it can
+        recognize faces generated from the autoencoder(d_cost_gen).
+      </p>
 
-    During training and testing, we mainly track three of them: g_cost_d, enc_cost and d_cost_real.
+      <p>
+          The cost function used to update the autoencoder is:
+          <xmp>
+              g_cost_d + enc_cost / X
+          </xmp> X is a hyper parameter that decides how heavily to weight MSE when calculating the autoencoder cost.
+          The cost function used to update the discriminator is:
+          <xmp>
+              d_cost_real + d_cost_gen
+          </xmp>
+      </p>
+
+
+    During training and testing, we track: g_cost_d, enc_cost and d_cost_real.
     <h2>Results</h2>
     <center><img src="images/one.png"></center>
 
-    The base setup is denoising autoencoder with discriminator.
-    (Base model Setup description goes here.)
+    <center>The base setup is the denoising autoencoder and discriminator with x = 1.</center>
 
-      <h3>Base Setup test results:</h3>
-      We hold out 1000 images for testing and here are the results.
+      <h3>Base Setup Testing Set Results:</h3>
+      Results from images in the 1000 image testing set.
           <h4><center>Test results along training epoches</center></h4>
             <center>
               <iframe width="320" height="180" src="https://www.youtube.com/embed/SXWT4DDnukI" frameborder="0" allowfullscreen></iframe>
@@ -157,70 +169,56 @@ $(function(){
           <div id="denoising_one_encoding_mse_test_vs_train"></div>
           <div id="denoising_one_encoding_discrim_testing"></div>
           <p>
-            Around 10k iter, reconstruction reach local minimum. And we see a divergence trend starting
-            at around 15k between generator's performence on fooling discriminator (g_cost_d) and discriminator's performence on
+            Around 10k iterations, the encoding cost reaches a local minimum. We see a divergence trend starting
+            at around 15k between the autoencoder's ability to fool the discriminator (g_cost_d) and the discriminator's ability of
             identifying real face data(d_cost_real).
           </p>
           <p>
-            An explanation we believe is: discriminator's only goal is discriminate between real
-            face data and generated data, it learns so much from generator reconstruction result as mse loss getting lower. So it
-            is gradually good at diffenciating real and generated data even if the generated faces are more convincing after a few
-            epoches. However generator still has to care on reconstruction loss the same amount compared to the starting point even
-            if it can't learn much from the reconstruction loss plus discriminator becomes better and better. Therefore these two agent end up diverging.
-          </p>
-          <p>
-            We propose there should be a dynamic learning mechanism on adjusting the weights for at least generator at this case:
-            generator should gradually learn less from the mse loss in reconstructing the faces once learning from mse loss is no longer
+            A possible explanation is that as the MSE encoding cost converges on a lower bound, the autoencoder is no longer to fool the discriminator by updating with a loss function that so heavily favors the already converged MSE.
+            A possible solution would be to use a dynamic learning mechanism to adjust the cost function for the autoencoder.
+            As training progresses, the hyperparameter X should be updated to weight MSE loss less once MSE cost has converged because learning from MSE no longer seems to be
             "efficient" in the sense of fooling the discriminator.
           </p>
 
     <h2>Experiments</h2>
-      <p>To help better understand how generator and discriminator works together, we run several control experiments based on our base setup.
+      <p>To help better understand how the autoencoder and discriminator work together, we ran several control experiments based on our initial setup.
 
-      <h3>Without discriminator</h3>
+      <h3>Without Discriminator</h3>
 
       <center><img src="images/noDiscriminator.png"></center>
         <h4><center>without discriminator mse loss</center></h4>
           <div id="autoencoder_mse_test_vs_train"></div>
           <p>
-            Discriminator does help with reconstruction even though it’s objective is to discriminate between real face data and generated face data.
-            So we hypothesize discriminator helps with encoding/decoding the signal, which leads to one of our future work.
+            We see that the discriminator does help with reconstruction even though it's objective is to discriminate between real face data and generated face data.
           </p>
 
-      <h3>Decrease generator learning weights from mse loss</h3>
+      <h3>Decrease Mean Squared Error's Infulence on Reconstruction</h3>
       <center><img src="images/one_hundred.png"></center>
       <!-- <h4><center>mse loss without pooling</center></h4> -->
         <div id="denoising_one_hundreth_encoding_mse_test_vs_train"></div>
         <div id="denoising_one_hundreth_encoding_discrim_testing"></div>
         <p>
-          To test what is a good weight combination for generator to learn from MSE loss and fooling discriminator loss, we set
+          To experiment with how to combine MSE loss and discriminator loss for autoencoder updates, we set
           <xmp>
             generator_loss = MSE * X + g_cost_d
           </xmp>
           where X = .01(base model X = 1).
-          From the X = .01 experiment, we see resonctruction loss reach local minimum at loss value much higher than X = 1.
-          This leads to generator learns more from discriminator and reach an equilibrium  with discriminator but leads
-          to poor reconstruction of the original input.
-          Such result is bad because this adversarial network is two agents learning from each other, but reaching equilibrium early
-          leads to two agent ends up learning nothing from each other. Agents think they are doing a good job based on
-          their objectives, but it’s actually not.
-        </p>
-        <p>
-          So at this case, Learning a good reconstruction for generator is the top priority initially.
-          If Generator learns more from discriminator initially, it leads to reaching a non optimal equilibrium earlier
-          and earlier equilibrium leads to bad performance for both agents.
+          From the X = .01 experiment, we see reconstruction loss reach a local minimum at a loss value much higher than X = 1.
+          This leads the generator to learn more from the discriminator and reach an equilibrium quickly, but leads
+          to slightly worse reconstruction of the original input.  We believe that generated and real image discriminator loss reaching the equilibrium point too early leads
+          the discriminator and autoencoder to stop learning from one another. This is because both sides already believe they are doing a good job based on their objective.
+          As mentioned before, we believe that adding a way to actively adjust the X hyperparameter may lead to more stable training.
         </p>
 
-      <h3>MSE reconstruction without pooling</h3>
+      <h3>MSE Without Pooling</h3>
       <center><img src="images/nopoolingmse.png"></center>
-        <h4><center>mse loss without pooling</center></h4>
+        <h4><center>MSE Without Pooling</center></h4>
           <div id="denoising_one_encoding_nopooling_discrim_testing"></div>
           <p>
-            Since MSE for autoencoder makes the reconstructed image blur.
-            This experiment test the idea that doing max pooling then calculate
-            MSE loss helps with sharpening the patch completes the face. The reason
-            is obvious, the backpropagation from the max pooling layer makes the filling
-            patches sharper compared to calculate MSE loss without max pooling.
+            The original implementation provided by <a href = "https://swarbrickjones.wordpress.com/2016/01/13/enhancing-images-using-deep-convolutional-generative-adversarial-networks-dcgans/">Enhancing images using Deep Convolutional Generative Adversarial Networks (DCGANs)</a>
+            performs the additional step of max pooling on the reconstructed and target image before calculating the mean squared error.  Our base implementation also uses this method.  The reason described for including max pooling is that it counteracts the blurred look
+            that is often present when using denoising autoencoders.  We trained an additional model to test whether pooling was effectively preventing blur.  The results above clearly show that removing pooling does in fact bring back a blurred look to the problem area.  However,
+            the areas of the image that were not masked in the input image seem to be mostly clear of artifacts.  This is in direct contrast from when pooling is used; images often have artifacts on areas outside of the original image mask.
           </p>
   </div>
 

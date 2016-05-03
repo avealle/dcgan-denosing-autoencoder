@@ -53,7 +53,7 @@ $(function(){
     <h2>Project Overview</h2>
     <p>
         Our original project focus was creating a pipeline for photo restoration of portrait images.  Many damaged photos are available online, and current photo restoration solutions either provide unsatisfactory results, or
-        require an advanced understanding of image editing software.  Shortly after begining the project, we narrowed our scope to what we consider the most interesting subproblem of photo resotration: facial image completion.
+        require an advanced understanding of image editing software.  Shortly after beginning the project, we narrowed our scope to what we consider the most interesting subproblem of photo restoration: facial image completion.
         The image completion problem we attempted to solve was as follows, given an image of a face with a square section of the image set to be white, fill in the missing pixels.
     </p>
         <figure>
@@ -94,7 +94,7 @@ $(function(){
     Traditionally, autoencoders have been used to learn a feature representation for some data set.  Denoising autoencoders artificially corrupt input data in order to force a more robust representation to be learned.
     In our case, the image mask is the data corruption.  Our autoencoder first transforms the input data through a series of 4 convolution layers.  At the center layer of the autoencoder, the image is represented by 1024 8 x 10
     feature maps.  The input image is then reconstructed by 4 fractionally strided convolution layers (sometimes called deconvolution layers).  The output layer uses a tanh activation function.  The autoencoder's weights are updated by a combination of two cost: the mean squared error
-    between the original unmasked image and the reconsted image, and binary cross entropy using the output of the discriminator (desribed in the next section).  A diagram of the autoencoder is shown below.
+    between the original unmasked image and the reconstructed image, and binary cross entropy using the output of the discriminator (described in the next section).  A diagram of the autoencoder is shown below.
     <figure>
       <center><img src="images/architecture_autoencoder.png" alt="Autoencoder Architecture" width="800"></center>
     </figure>
@@ -165,7 +165,7 @@ $(function(){
 
       <h3>Base Setup Testing Set Results:</h3>
       Results from images in the 1000 image testing set.
-          <h4><center>Test results along training epoches</center></h4>
+          <h4><center>Test results along training epochs</center></h4>
             <center>
               <iframe width="320" height="180" src="https://www.youtube.com/embed/SXWT4DDnukI" frameborder="0" allowfullscreen></iframe>
               <iframe width="320" height="180" src="https://www.youtube.com/embed/3iqZ5s_2HoE" frameborder="0" allowfullscreen></iframe>
@@ -185,7 +185,7 @@ $(function(){
           <p>
             A possible explanation is that as the MSE encoding cost converges on a lower bound, the autoencoder is no longer to fool the discriminator by updating with a loss function that so heavily favors the already converged MSE.
             A possible solution would be to use a dynamic learning mechanism to adjust the cost function for the autoencoder.
-            As training progresses, the hyperparameter X should be updated to weight MSE loss less once MSE cost has converged because learning from MSE no longer seems to be
+            As training progresses, the parameter X should be updated to weight MSE loss less once MSE cost has converged because learning from MSE no longer seems to be
             "efficient" in the sense of fooling the discriminator.
           </p>
 
@@ -201,7 +201,7 @@ $(function(){
             We see that the discriminator does help with reconstruction even though it's objective is to discriminate between real face data and generated face data.
           </p>
 
-      <h3>Decrease Mean Squared Error's Infulence on Reconstruction</h3>
+      <h3>Decrease Mean Squared Error's Influence on Reconstruction</h3>
       <center><img src="images/one_hundred.png"></center>
       <!-- <h4><center>mse loss without pooling</center></h4> -->
         <div id="denoising_one_hundreth_encoding_mse_test_vs_train"></div>
@@ -216,7 +216,7 @@ $(function(){
           This leads the generator to learn more from the discriminator and reach an equilibrium quickly, but leads
           to slightly worse reconstruction of the original input.  We believe that generated and real image discriminator loss reaching the equilibrium point too early leads
           the discriminator and autoencoder to stop learning from one another. This is because both sides already believe they are doing a good job based on their objective.
-          As mentioned before, we believe that adding a way to actively adjust the X hyperparameter may lead to more stable training.
+          As mentioned before, we believe that adding a way to actively adjust the X parameter may lead to more stable training.
         </p>
 
       <h3>MSE Without Pooling</h3>
@@ -232,7 +232,7 @@ $(function(){
     <h2>Future Work</h2>
     <ul>
       <li>
-          From the experiments, we see a dynamic mechanism is neccesary for the autoencoder to learn more effectively. Adjusting the weight between MSE loss and discriminator loss on the fly to avoid divergence could be adventageous. We want to explore more in this area.
+          From the experiments, we see a dynamic mechanism is necessary for the autoencoder to learn more effectively. Adjusting the weight between MSE loss and discriminator loss on the fly to avoid divergence could be advantageous. We want to explore more in this area.
       </li>
       <li>
           After training is complete, we only use the autoencoder portion of the architecture.  However, we have also trained a discriminator that can identify faces.  We'd like to measure how well the discriminator performs in a face recognition pipeline.
